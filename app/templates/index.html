@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}FitPal – Tu Gimnasio{% endblock %}
+
+{% block content %}
+
+
+
+<section class="py-5 bg-light">
+  <div class="container">
+    <h2 class="text-center fw-bold mb-4">Nuestros planes</h2>
+    <div class="row g-4 justify-content-center">
+      {% for plan in planes %}
+      <div class="col-md-4">
+        <div class="plan-card h-100 shadow-sm border-0 position-relative">
+          {% if plan.name == '6 MESES' or plan.name == 'Plan Black' or plan.name == 'Black' %}
+            <div class="position-absolute top-0 start-0 m-3"><span class="badge bg-warning text-dark">Recomendado</span></div>
+          {% endif %}
+          <div class="plan-inner p-4 d-flex flex-column h-100 text-start">
+            <div class="plan-header mb-3">
+              <h4 class="fw-bold mb-0">{{ plan._display_name if plan._display_name else plan.name }}</h4>
+            </div>
+
+            <div class="plan-desc text-muted mb-4">{{ plan.description | safe }}</div>
+            <div class="mt-auto text-center">
+              <a href="{{ url_for('plans.subscribe', plan_id=plan.id) }}" class="btn btn-subscribe w-100 fw-bold">¡Inscribirme!</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <p class="text-center text-muted">No hay planes disponibles aún.</p>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+<section class="py-5 bg-white">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Nuestras Instalaciones</h2>
+      <p class="text-muted mx-auto" style="max-width: 680px;">Mirá cómo queda el gym: sala de cardio, pesas y área funcional en un solo lugar.</p>
+    </div>
+    <div class="row g-3">
+      {% for i in range(1, 10) %}
+        <div class="col-12 col-sm-6 col-lg-4">
+          <div class="ratio ratio-4x3 rounded overflow-hidden shadow-sm">
+            <img src="{{ url_for('static', filename='i' ~ i ~ '.png') }}" class="img-fluid object-fit-cover" alt="Instalación {{ i }}">
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="py-5 bg-black text-light imc-section">
+  <div class="container">
+    <h2 class="text-center fw-bold mb-4">CALCULÁ TU IMC</h2>
+    <p class="text-center text-white-50 mb-5">¿Estás en tu peso ideal? ¿Te sobra algo de peso? Descúbrelo con la Calculadora del Índice de Masa Corporal (IMC)</p>
+    <div class="row g-4 justify-content-center align-items-stretch">
+      <div class="col-lg-5">
+        <div class="card imc-form-card border-0 shadow-sm text-light h-100">
+          <div class="card-body p-4">
+            <div class="mb-4">
+              <label for="weightKg" class="form-label">Peso</label>
+              <input type="number" class="form-control form-control-dark" id="weightKg" min="1" step="0.1" placeholder="Ej. 72.5">
+            </div>
+            <div class="mb-4">
+              <label for="heightCm" class="form-label">Altura</label>
+              <input type="number" class="form-control form-control-dark" id="heightCm" min="50" step="0.1" placeholder="Ej. 175">
+            </div>
+            <button id="calculateImc" class="btn btn-success btn-lg w-100 fw-bold">Calcular</button>
+            <div id="imcResult" class="mt-4 text-white" style="min-height: 2.5rem;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="card imc-types-card border-0 shadow-sm h-100 text-white">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start mb-4">
+              <div>
+                <h3 class="h5 mb-1">IMC</h3>
+                <p class="small text-white-50 mb-0">Valores</p>
+              </div>
+              <div class="text-end">
+                <h3 class="h5 mb-1">Estado de peso</h3>
+              </div>
+            </div>
+            <div class="imc-types-list">
+              <div class="imc-range-row d-flex justify-content-between align-items-center py-3">
+                <span class="fw-semibold">Menor a 18.5</span>
+                <span>Bajo peso</span>
+              </div>
+              <div class="imc-range-row d-flex justify-content-between align-items-center py-3">
+                <span class="fw-semibold">18.5 - 24.9</span>
+                <span>Normal</span>
+              </div>
+              <div class="imc-range-row d-flex justify-content-between align-items-center py-3">
+                <span class="fw-semibold">25 - 29.9</span>
+                <span>Sobrepeso</span>
+              </div>
+              <div class="imc-range-row d-flex justify-content-between align-items-center py-3">
+                <span class="fw-semibold">30 o superior</span>
+                <span>Obeso</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% if noticias %}
+<section class="py-5">
+  <div class="container">
+    <h2 class="text-center fw-bold mb-4">Últimas noticias</h2>
+    <div class="row g-4">
+      {% for n in noticias %}
+      <div class="col-md-4">
+        <div class="card h-100 shadow-sm border-0">
+          {% if n.image_url %}
+          <img src="{{ n.image_url }}" class="card-img-top" style="height:180px;object-fit:cover" alt="{{ n.title }}">
+          {% endif %}
+          <div class="card-body">
+            <h5 class="fw-bold">{{ n.title }}</h5>
+            <p class="text-muted small">{{ n.content[:120] }}{% if n.content|length > 120 %}…{% endif %}</p>
+            <a href="{{ url_for('news.detail', news_id=n.id) }}" class="btn btn-sm btn-outline-secondary">Leer más</a>
+          </div>
+          <div class="card-footer text-muted small">{{ n.created_at.strftime('%d/%m/%Y') }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+

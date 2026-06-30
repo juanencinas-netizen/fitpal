@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    
+    <nav class="col-md-2 d-none d-md-block bg-dark sidebar">
+      <style>
+      
+      
+      .sidebar { padding-top: 0 !important; }
+      
+      main.col-md-10.ms-sm-auto.px-md-4.py-4 { padding-top: .5rem !important; padding-bottom: .75rem !important; }
+      
+      .position-sticky p { margin-top: .25rem !important; margin-bottom: .35rem !important; }
+      
+      footer.site-footer { margin-top: 1rem !important; }
+      
+      @media (min-width: 768px) {
+        nav.sidebar { position: sticky; top: 86px; height: calc(100vh - 86px); overflow-y: auto; align-self: flex-start; }
+      }
+      </style>
+      <div class="position-sticky">
+        <p class="text-muted px-3 small text-uppercase fw-bold mt-2">Panel Admin</p>
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link text-light {% if request.endpoint == 'admin.dashboard' %}active-side{% endif %}"
+               href="{{ url_for('admin.dashboard') }}">
+              <i class="bi bi-speedometer2 me-2"></i> Dashboard
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light {% if 'users' in request.endpoint %}active-side{% endif %}"
+               href="{{ url_for('admin.users_list') }}">
+              <i class="bi bi-people me-2"></i> Usuarios
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light {% if 'plan' in request.endpoint %}active-side{% endif %}"
+               href="{{ url_for('admin.plans_list') }}">
+              <i class="bi bi-card-list me-2"></i> Planes
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link text-light {% if 'news' in request.endpoint %}active-side{% endif %}"
+               href="{{ url_for('admin.news_list') }}">
+              <i class="bi bi-newspaper me-2"></i> Noticias
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    
+    <main class="col-md-10 ms-sm-auto px-md-4 py-4">
+      {% block admin_content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

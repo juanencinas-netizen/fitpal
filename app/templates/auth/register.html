@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Registrarse – FitPal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-md-5">
+      <div class="card shadow border-0">
+        <div class="card-body p-4">
+          <h3 class="text-center fw-bold mb-2"><i class="bi bi-lightning-charge-fill text-warning"></i> FitPal</h3>
+          <h5 class="text-center mb-4">Crear cuenta</h5>
+
+          <form method="POST">
+            <div class="mb-3">
+              <label class="form-label">Nombre completo</label>
+              <input type="text" name="name" class="form-control" required autofocus>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="email" name="email" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Contraseña</label>
+              <input type="password" name="password" class="form-control" required minlength="6">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Confirmar contraseña</label>
+              <input type="password" name="confirm_password" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-dark w-100 fw-bold">Registrarme</button>
+          </form>
+
+          <hr class="my-3">
+          <a href="{{ url_for('auth.google_login') }}" class="btn btn-outline-danger w-100">
+            <i class="bi bi-google me-2"></i> Continuar con Google
+          </a>
+
+          <p class="text-center mt-3 mb-0 small">
+            ¿Ya tenés cuenta? <a href="{{ url_for('auth.login') }}">Iniciá sesión</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

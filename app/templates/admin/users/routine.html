@@ -1,0 +1,78 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Rutina de {{ user.name }} - Administrador{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <a href="{{ url_for('admin.user_edit', user_id=user.id) }}" class="btn btn-outline-secondary btn-sm me-2">← Volver</a>
+        <h2 class="d-inline mb-0">Rutina de {{ user.name }}</h2>
+    </div>
+    <form method="POST" action="{{ url_for('admin.user_routine_delete_all', user_id=user.id) }}" onsubmit="return confirm('¿Eliminar toda la rutina de este usuario?');">
+        <button type="submit" class="btn btn-danger btn-sm">Borrar rutina completa</button>
+    </form>
+</div>
+
+<div class="mb-3">
+    <span class="badge bg-primary">Plan: {{ user.subscription.plan.name if user.subscription else 'Sin plan' }}</span>
+    {% if user.subscription and not user.subscription.active %}
+        <span class="badge bg-warning text-dark">Suscripción inactiva</span>
+    {% endif %}
+</div>
+
+{% if routines %}
+    <div class="accordion" id="adminUserRoutineAccordion">
+        {% for day_name, routine_day, exercises in routines %}
+        <div class="card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center" id="heading-{{ day_name }}">
+                <button class="btn btn-link text-start flex-grow-1 p-0" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-{{ day_name }}" aria-expanded="false" aria-controls="collapse-{{ day_name }}">
+                    <strong>{{ day_name }}</strong>
+                </button>
+                <a href="{{ url_for('routines.add_exercise', day_name=day_name, user_id=user.id, next=url_for('admin.user_routine', user_id=user.id)) }}" class="btn btn-sm btn-outline-success">Agregar ejercicio</a>
+            </div>
+            <div id="collapse-{{ day_name }}" class="collapse" aria-labelledby="heading-{{ day_name }}" data-bs-parent="#adminUserRoutineAccordion">
+                <div class="card-body">
+                    {% if exercises %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Ejercicio</th>
+                                        <th>Músculo</th>
+                                        <th>Sets</th>
+                                        <th>Reps</th>
+                                        <th>Dificultad</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in exercises %}
+                                    <tr>
+                                        <td>{{ entry.exercise.name }}</td>
+                                        <td>{{ entry.exercise.muscle }}</td>
+                                        <td>{{ entry.sets }}</td>
+                                        <td>{{ entry.reps }}</td>
+                                        <td>{{ entry.difficulty }}</td>
+                                        <td class="text-end">
+                                            <a href="{{ url_for('routines.edit_exercise', entry_id=entry.id, next=url_for('admin.user_routine', user_id=user.id)) }}" class="btn btn-sm btn-outline-primary me-1">Editar</a>
+                                            <form method="POST" action="{{ url_for('routines.delete_exercise', entry_id=entry.id, next=url_for('admin.user_routine', user_id=user.id)) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este ejercicio?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-secondary mb-0">No hay ejercicios para este día.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-info">Este usuario no tiene días de rutina configurados aún.</div>
+{% endif %}
+{% endblock %}

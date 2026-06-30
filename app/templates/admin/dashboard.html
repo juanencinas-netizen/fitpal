@@ -1,0 +1,91 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Dashboard – Admin FitPal{% endblock %}
+
+{% block admin_content %}
+<h2 class="fw-bold mb-4">Dashboard</h2>
+
+<div class="row g-4 mb-5">
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-white bg-primary">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-people-fill fs-1"></i>
+        <div>
+          <div class="fs-2 fw-bold">{{ total_users }}</div>
+          <div>Usuarios</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-white bg-success">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-card-list fs-1"></i>
+        <div>
+          <div class="fs-2 fw-bold">{{ total_plans }}</div>
+          <div>Planes activos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-white bg-warning">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-newspaper fs-1"></i>
+        <div>
+          <div class="fs-2 fw-bold">{{ total_news }}</div>
+          <div>Noticias</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-white bg-info">
+      <div class="card-body d-flex align-items-center gap-3">
+        <i class="bi bi-patch-check-fill fs-1"></i>
+        <div>
+          <div class="fs-2 fw-bold">{{ active_subs }}</div>
+          <div>Suscripciones</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h5 class="fw-bold mb-3">Últimos usuarios registrados</h5>
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>#</th><th>Nombre</th><th>Email</th><th>Suscripción</th><th>Registro</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in recent_users %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>
+          {% if u.avatar_url %}<img src="{{ u.avatar_url }}" width="28" class="rounded-circle me-2">{% endif %}
+          {{ u.name }}
+        </td>
+        <td>{{ u.email }}</td>
+        <td>
+          {% if u.subscription and u.subscription.active %}
+            <span class="badge bg-success">{{ u.subscription.plan.name }}</span>
+          {% else %}
+            <span class="badge bg-secondary">Sin plan</span>
+          {% endif %}
+        </td>
+        <td>{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+        <td>
+          <a href="{{ url_for('admin.user_edit', user_id=u.id) }}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-pencil"></i>
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center text-muted">Sin usuarios registrados aún.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Planes – Admin FitPal{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-bold mb-0">Planes</h2>
+  <div class="d-flex gap-2">
+    <form method="POST" action="{{ url_for('admin.plans_normalize') }}">
+      <button type="submit" class="btn btn-sm btn-outline-secondary" title="Aplicar nombres y precios recomendados">
+        <i class="bi bi-repeat me-1"></i> Aplicar nombres recomendados
+      </button>
+    </form>
+    <a href="{{ url_for('admin.plan_create') }}" class="btn btn-dark">
+      <i class="bi bi-plus-lg me-1"></i> Nuevo plan
+    </a>
+  </div>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-dark">
+      <tr><th>#</th><th>Nombre</th><th>Precio</th><th>Duración</th><th>Estado</th><th>Acciones</th></tr>
+    </thead>
+    <tbody>
+      {% for plan in planes %}
+      <tr>
+        <td>{{ plan.id }}</td>
+        <td class="fw-semibold">{{ plan._display_name if plan._display_name else plan.name }}</td>
+        <td>${{ "%.0f"|format(plan._display_price if plan._display_price is not none else plan.price) }}</td>
+        <td>Mensual</td>
+        <td>
+          {% if plan.active %}
+            <span class="badge bg-success">Activo</span>
+          {% else %}
+            <span class="badge bg-secondary">Inactivo</span>
+          {% endif %}
+        </td>
+        <td>
+          <a href="{{ url_for('admin.plan_edit', plan_id=plan.id) }}" class="btn btn-sm btn-outline-primary me-1">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form method="POST" action="{{ url_for('admin.plan_delete', plan_id=plan.id) }}" class="d-inline"
+                onsubmit="return confirm('¿Desactivar este plan?')">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="text-center text-muted">Sin planes aún.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{% if user %}Editar{% else %}Crear{% endif %} usuario – FitPal{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-items-center mb-4 gap-2">
+  <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h2 class="fw-bold mb-0">{% if user %}Editar usuario{% else %}Nuevo usuario{% endif %}</h2>
+  {% if user %}
+  <a href="{{ url_for('admin.user_routine', user_id=user.id) }}" class="btn btn-outline-success btn-sm ms-auto">
+    <i class="bi bi-dumbbell me-1"></i>Gestionar rutina
+  </a>
+  {% endif %}
+</div>
+
+<div class="card border-0 shadow-sm" style="max-width:560px">
+  <div class="card-body p-4">
+    <form method="POST">
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Nombre completo *</label>
+        <input type="text" name="name" class="form-control" value="{{ user.name if user else '' }}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Email *</label>
+        <input type="email" name="email" class="form-control" value="{{ user.email if user else '' }}" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">
+          Contraseña {% if user %}<small class="text-muted fw-normal">(dejá vacío para no cambiar)</small>{% else %}*{% endif %}
+        </label>
+        <input type="password" name="password" class="form-control" {% if not user %}required{% endif %}>
+      </div>
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Plan de suscripción</label>
+        <select name="plan_id" class="form-select">
+          <option value="">Sin plan</option>
+          {% for plan in planes %}
+          <option value="{{ plan.id }}"
+            {% if user and user.subscription and user.subscription.plan_id == plan.id %}selected{% endif %}>
+            {{ plan.name }} – ${{ "%.0f"|format(plan.price) }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      {% if user and user.subscription %}
+      <div class="mb-3">
+        <label class="form-label fw-semibold">Estado de suscripción</label>
+        <div>
+          <strong>Plan:</strong> {{ user.subscription.plan.name }}<br>
+          <strong>Inicio:</strong> {{ user.subscription.start_date.strftime('%d/%m/%Y') }}<br>
+          <strong>Días restantes:</strong> {{ user.subscription.days_left }}<br>
+          <strong>Estado:</strong>
+          {% if user.subscription.status == 'active' %}
+            <span class="badge bg-success">Activa</span>
+          {% elif user.subscription.status == 'cancelled_scheduled' %}
+            <span class="badge bg-warning">Cancelada (programada)</span>
+          {% elif user.subscription.status == 'expired' %}
+            <span class="badge bg-danger">Vencida</span>
+          {% else %}
+            <span class="badge bg-secondary">{{ user.subscription.status }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="mb-3 d-flex gap-2">
+          {% if user.subscription.status == 'active' %}
+          <button type="submit" formaction="{{ url_for('admin.admin_cancel_subscription', user_id=user.id) }}" formmethod="post" class="btn btn-outline-warning">
+            Cancelar suscripción
+          </button>
+          {% endif %}
+        <button type="submit" formaction="{{ url_for('admin.user_remove_subscription', user_id=user.id) }}" formmethod="post" class="btn btn-outline-danger" onclick="return confirm('Quitar suscripción del usuario?')">Quitar suscripción</button>
+        {% if user.subscription and (not user.subscription.active or user.subscription.status == 'expired') %}
+        <button type="submit" formaction="{{ url_for('admin.admin_reactivate_subscription', user_id=user.id) }}" formmethod="post" class="btn btn-outline-success">Reactivar suscripción</button>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if user %}
+      <div class="mb-3 form-check">
+        <input type="checkbox" name="active" class="form-check-input" id="activeCheck"
+               {% if user.active %}checked{% endif %}>
+        <label class="form-check-label" for="activeCheck">Cuenta activa</label>
+      </div>
+      {% endif %}
+      <div class="d-flex gap-2">
+        <button type="submit" class="btn btn-dark fw-bold">
+          {% if user %}Guardar cambios{% else %}Crear usuario{% endif %}
+        </button>
+        <a href="{{ url_for('admin.users_list') }}" class="btn btn-outline-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

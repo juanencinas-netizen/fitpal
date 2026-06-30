@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% block title %}Mi Espacio – FitPal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="fw-bold"><i class="bi bi-person-workspace me-2"></i>Mi Espacio</h1>
+      <p class="text-muted">Gestiona tu perfil, rutinas y suscripción en un solo lugar</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12">
+      <ul class="nav nav-tabs border-bottom" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="true">
+            <i class="bi bi-person-circle me-2"></i>Mi Perfil
+          </button>
+        </li>
+        {% if can_add_routines %}
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="routines-tab" data-bs-toggle="tab" data-bs-target="#routines" type="button" role="tab" aria-controls="routines" aria-selected="false">
+            <i class="bi bi-dumbbell me-2"></i>Mis Rutinas
+          </button>
+        </li>
+        {% endif %}
+        {% if can_view_recommended %}
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="recommended-tab" data-bs-toggle="tab" data-bs-target="#recommended" type="button" role="tab" aria-controls="recommended" aria-selected="false">
+            <i class="bi bi-star-fill me-2"></i>Rutinas recomendadas
+          </button>
+        </li>
+        {% endif %}
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="edit-tab" data-bs-toggle="tab" data-bs-target="#edit" type="button" role="tab" aria-controls="edit" aria-selected="false">
+            <i class="bi bi-pencil-square me-2"></i>Editar Perfil
+          </button>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="tab-content mt-4">
+    
+    <div class="tab-pane fade show active" id="profile" role="tabpanel" aria-labelledby="profile-tab">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card border-0 shadow-sm text-center p-4">
+            {% if current_user.avatar_url %}
+              <img src="{{ current_user.avatar_url }}" class="rounded-circle mx-auto mb-3"
+                   width="100" height="100" alt="avatar">
+            {% else %}
+              <div class="bg-dark rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                   style="width:100px;height:100px">
+                <i class="bi bi-person-fill text-white fs-1"></i>
+              </div>
+            {% endif %}
+            <h4 class="fw-bold">{{ current_user.name }}</h4>
+            <p class="text-muted mb-2">{{ current_user.email }}</p>
+            {% if current_user.google_id %}
+              <span class="badge bg-danger"><i class="bi bi-google me-1"></i>Google</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="col-md-8">
+          <div class="card border-0 shadow-sm p-4 h-100">
+            <h5 class="fw-bold mb-4"><i class="bi bi-patch-check me-2 text-success"></i>Mi suscripción</h5>
+            {% if current_user.subscription %}
+              {% set sub = current_user.subscription %}
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <i class="bi bi-award-fill text-warning fs-1"></i>
+              <div>
+                <h4 class="fw-bold mb-0">{{ sub.plan.name }}</h4>
+                {% if sub.status == 'active' %}
+                  <span class="badge bg-success">Activa</span>
+                {% elif sub.status == 'cancelled_scheduled' %}
+                  <span class="badge bg-warning text-dark">Cancelada - vigencia hasta {{ sub.end_date.strftime('%d/%m/%Y') }}</span>
+                {% else %}
+                  <span class="badge bg-secondary">{{ sub.status | replace('_', ' ') | title }}</span>
+                {% endif %}
+              </div>
+            </div>
+            <ul class="list-group list-group-flush">
+              <li class="list-group-item px-0">
+                <strong>Precio:</strong> ${{ "%.0f"|format(sub.plan.price) }}/mes
+              </li>
+              <li class="list-group-item px-0">
+                <strong>Inicio:</strong> {{ sub.start_date.strftime('%d/%m/%Y') }}
+              </li>
+              {% if days_left is not none %}
+                <li class="list-group-item px-0">
+                  <strong>Días restantes:</strong> {{ days_left }} días
+                </li>
+              {% endif %}
+            </ul>
+            <div class="mt-3 d-flex gap-2">
+              {% if sub.status == 'active' %}
+                <form method="POST" action="{{ url_for('user.cancel_subscription') }}">
+                  <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Seguro que querés cancelar?')">
+                    <i class="bi bi-x-circle me-1"></i>Cancelar suscripción
+                  </button>
+                </form>
+              {% elif sub.status == 'cancelled_scheduled' %}
+                <div class="alert alert-warning p-3 mb-0 w-100">
+                  La suscripción está cancelada pero sigue vigente hasta {{ sub.end_date.strftime('%d/%m/%Y') }}.
+                </div>
+                <form method="POST" action="{{ url_for('user.reactivate_subscription') }}">
+                  <button type="submit" class="btn btn-outline-success btn-sm">
+                    <i class="bi bi-arrow-repeat me-1"></i>Reactivar suscripción
+                  </button>
+                </form>
+              {% endif %}
+            </div>
+            {% else %}
+              <div class="alert alert-warning mb-0">
+                <i class="bi bi-info-circle me-2"></i>
+                No tenés una suscripción activa. <a href="{{ url_for('plans.index') }}">Ver planes</a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if can_add_routines %}
+    
+    <div class="tab-pane fade" id="routines" role="tabpanel" aria-labelledby="routines-tab">
+      {% if routines %}
+        {% if not can_add_routines %}
+          <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Para crear o editar tu rutina, necesitás un plan <strong>Fit</strong> o <strong>Black</strong>.
+          </div>
+        {% endif %}
+        
+        {% if can_add_routines %}
+          <div class="mb-3 d-flex gap-2">
+            <form method="POST" action="{{ url_for('user.delete_all_routine') }}" style="display:inline" onsubmit="return confirm('¿Estás seguro? Se eliminarán TODOS los ejercicios de tu rutina.')">
+              <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash me-1"></i>Borrar toda mi rutina
+              </button>
+            </form>
+          </div>
+        {% endif %}
+        
+        <div id="accordion-routines">
+          {% for day_name, routine_day, exercises in routines %}
+            <div class="card border-0 shadow-sm mb-3">
+              <div class="card-header bg-light d-flex justify-content-between align-items-center" style="cursor: pointer;" data-bs-toggle="collapse" data-bs-target="#collapse-{{ day_name }}">
+                <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                  <i class="bi bi-chevron-down"></i>{{ day_name }}
+                </h5>
+                {% if can_add_routines %}
+                  <a href="{{ url_for('routines.add_exercise', day_name=day_name) }}" class="btn btn-sm btn-outline-success btn-agregar-ejercicio">
+                    <i class="bi bi-plus-circle me-1"></i>Agregar
+                  </a>
+                {% else %}
+                  <button type="button" class="btn btn-sm btn-outline-secondary disabled" title="Solo plan Fit o Black">
+                    <i class="bi bi-lock me-1"></i>Agregar
+                  </button>
+                {% endif %}
+              </div>
+              
+              <div id="collapse-{{ day_name }}" class="collapse" data-bs-parent="#accordion-routines">
+                {% if exercises %}
+                  <div class="card-body p-0">
+                    <div class="table-responsive">
+                      <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                          <tr>
+                            <th>Ejercicio</th>
+                            <th>Músculo</th>
+                            <th>Series</th>
+                            <th>Repeticiones</th>
+                            <th>Dificultad</th>
+                            <th>Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {% for exercise_entry in exercises %}
+                            <tr>
+                              <td class="fw-bold">{{ exercise_entry.exercise.name }}</td>
+                              <td>{{ exercise_entry.exercise.muscle }}</td>
+                              <td>{{ exercise_entry.sets }}</td>
+                              <td>{{ exercise_entry.reps }}</td>
+                              <td>
+                                {% if exercise_entry.difficulty == 'Principiante' %}
+                                  <span class="badge bg-success">Principiante</span>
+                                {% elif exercise_entry.difficulty == 'Intermedio' %}
+                                  <span class="badge bg-warning">Intermedio</span>
+                                {% else %}
+                                  <span class="badge bg-danger">Avanzado</span>
+                                {% endif %}
+                              </td>
+                              <td>
+                                <div class="d-flex gap-1">
+                                  <a href="{{ url_for('routines.edit_exercise', entry_id=exercise_entry.id) }}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                  </a>
+                                  <form method="POST" action="{{ url_for('routines.delete_exercise', entry_id=exercise_entry.id) }}" style="display:inline" onsubmit="return confirm('¿Eliminar este ejercicio?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                      <i class="bi bi-trash"></i>
+                                    </button>
+                                  </form>
+                                </div>
+                              </td>
+                            </tr>
+                          {% endfor %}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                {% else %}
+                  <div class="card-body text-muted text-center py-4">
+                    <i class="bi bi-inbox fs-2 mb-2"></i>
+                    <p class="mb-0">Sin ejercicios asignados</p>
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+
+      {% else %}
+        <div class="alert alert-info">
+          <i class="bi bi-info-circle me-2"></i>
+          Aún no has creado tu rutina. <a href="{{ url_for('routines.index') }}">Comenzar ahora</a>
+        </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if can_view_recommended %}
+    
+    <div class="tab-pane fade" id="recommended" role="tabpanel" aria-labelledby="recommended-tab">
+        <div class="row g-4">
+          {% for routine in recommended_routines %}
+            <div class="col-lg-6">
+              <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                  <h5 class="fw-bold">{{ routine.title }}</h5>
+                  <p class="text-muted mb-3">{{ routine.subtitle }}</p>
+                  <p>{{ routine.description }}</p>
+                  <div class="list-group list-group-flush">
+                    {% for day in routine.days %}
+                      <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                          <div>
+                            <strong>{{ day.day }}</strong>
+                            <div class="text-muted">{{ day.focus }}</div>
+                          </div>
+                          <span class="badge bg-primary">{{ loop.index }}°</span>
+                        </div>
+                        <small class="text-muted">{{ day.details }}</small>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div class="mt-3 text-center">
+                    <form method="POST" action="{{ url_for('user.load_recommended_routine', routine_key=routine.key) }}">
+                      <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-cloud-download-fill me-2"></i>Cargar esta rutina en mi semana
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    
+    <div class="tab-pane fade" id="edit" role="tabpanel" aria-labelledby="edit-tab">
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm p-4">
+            <h5 class="fw-bold mb-4">Editar información personal</h5>
+            <form method="POST" action="{{ url_for('user.edit_profile') }}">
+              <div class="mb-3">
+                <label for="name" class="form-label">Nombre completo</label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ current_user.name }}" required>
+              </div>
+
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" disabled value="{{ current_user.email }}">
+                <small class="text-muted d-block mt-1">Tu email no puede ser modificado</small>
+              </div>
+
+              {% if not current_user.google_id %}
+                <hr class="my-4">
+                <h5 class="fw-bold mb-4">Cambiar contraseña</h5>
+                
+                <div class="mb-3">
+                  <label for="current_password" class="form-label">Contraseña actual</label>
+                  <input type="password" class="form-control" id="current_password" name="current_password">
+                  <small class="text-muted d-block mt-1">Requerida si querés cambiar la contraseña</small>
+                </div>
+
+                <div class="mb-3">
+                  <label for="new_password" class="form-label">Nueva contraseña</label>
+                  <input type="password" class="form-control" id="new_password" name="new_password">
+                  <small class="text-muted d-block mt-1">Dejá en blanco si no querés cambiar</small>
+                </div>
+              {% else %}
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle me-2"></i>
+                  Tu cuenta está vinculada con Google. No podés cambiar la contraseña desde aquí.
+                </div>
+              {% endif %}
+
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="bi bi-check-circle me-1"></i>Guardar cambios
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.btn-agregar-ejercicio').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  });
+});
+</script>
+{% endblock %}

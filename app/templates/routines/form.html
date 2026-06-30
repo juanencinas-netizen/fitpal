@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}{{ action }} ejercicio{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-5 mb-5">
+  
+  <div class="text-center mb-5">
+    <h1 class="fw-bold">{{ action }} ejercicio</h1>
+    <p class="text-muted fs-5">{{ day_name if day_name else entry.routine_day.day_name }}</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card border-0 shadow-lg">
+        <div class="card-body p-5">
+          <form method="post">
+            
+            
+            <div class="row g-4 mb-4">
+              
+              <div class="col-md-5">
+                <label class="form-label fw-bold mb-3">Grupo Muscular</label>
+                <select id="muscleSelect" class="form-select form-select-lg">
+                  <option value="">-- Selecciona un músculo --</option>
+                  <option value="Pecho">Pecho</option>
+                  <option value="Espalda">Espalda</option>
+                  <option value="Bíceps">Bíceps</option>
+                  <option value="Tríceps">Tríceps</option>
+                  <option value="Hombros">Hombros</option>
+                  <option value="Piernas">Piernas</option>
+                </select>
+              </div>
+
+              
+              <div class="col-md-7">
+                <label class="form-label fw-bold mb-3">Ejercicio</label>
+                <select name="exercise_id" id="exerciseSelect" class="form-select form-select-lg" required>
+                  <option value="">-- Selecciona un ejercicio --</option>
+                  {% for ex in exercises %}
+                    <option value="{{ ex.id }}" data-difficulty="{{ ex.difficulty }}" data-muscle="{{ ex.muscle }}" {% if entry and entry.exercise_id == ex.id %}selected{% endif %}>{{ ex.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+
+            
+            <div class="row g-4">
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Series</label>
+                <input type="number" name="sets" class="form-control form-control-lg" value="{{ entry.sets if entry else 3 }}" min="1" max="10" required />
+              </div>
+              
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Repeticiones</label>
+                <input type="number" name="reps" class="form-control form-control-lg" value="{{ entry.reps if entry else 10 }}" min="1" max="50" required />
+              </div>
+              
+              <div class="col-md-4">
+                <label class="form-label fw-bold">Dificultad</label>
+                <div id="exerciseDifficulty" class="p-3 bg-light rounded text-center">
+                  {% if entry %}
+                    {% if entry.exercise.difficulty == 'Principiante' %}
+                      <span class="badge bg-success text-white fs-6">Principiante</span>
+                    {% elif entry.exercise.difficulty == 'Intermedio' %}
+                      <span class="badge bg-warning text-dark fs-6">Intermedio</span>
+                    {% else %}
+                      <span class="badge bg-danger text-white fs-6">Avanzado</span>
+                    {% endif %}
+                  {% else %}
+                    <small class="text-muted">Selecciona un ejercicio</small>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+
+            
+            <div class="d-grid gap-2 d-sm-flex justify-content-center mt-5">
+              <a class="btn btn-secondary btn-lg px-5" href="{{ url_for('routines.index') }}">Cancelar</a>
+              <button type="submit" class="btn btn-primary btn-lg px-5">{{ action }}</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const muscleSelect = document.getElementById('muscleSelect');
+  const exerciseSelect = document.getElementById('exerciseSelect');
+  const diffEl = document.getElementById('exerciseDifficulty');
+  
+  // Construir mapa de ejercicios por músculo
+  const allOptions = Array.from(exerciseSelect.options).slice(1); // Omitir el placeholder
+  const exercisesByMuscle = {};
+  
+  allOptions.forEach(opt => {
+    const muscle = opt.dataset.muscle;
+    if (!muscle) return;
+    if (!exercisesByMuscle[muscle]) {
+      exercisesByMuscle[muscle] = [];
+    }
+    exercisesByMuscle[muscle].push({
+      id: opt.value,
+      name: opt.textContent,
+      difficulty: opt.dataset.difficulty
+    });
+  });
+
+  // Filtrar ejercicios cuando cambia el músculo
+  muscleSelect.addEventListener('change', function(){
+    const selectedMuscle = this.value;
+    exerciseSelect.innerHTML = '<option value="">-- Selecciona un ejercicio --</option>';
+    
+    if (selectedMuscle && exercisesByMuscle[selectedMuscle]) {
+      exercisesByMuscle[selectedMuscle].forEach(ex => {
+        const opt = document.createElement('option');
+        opt.value = ex.id;
+        opt.textContent = ex.name;
+        opt.dataset.difficulty = ex.difficulty;
+        exerciseSelect.appendChild(opt);
+      });
+    }
+    
+    // Limpiar dificultad cuando se cambia el músculo
+    diffEl.innerHTML = '<small class="text-muted">Selecciona un ejercicio</small>';
+  });
+
+  // Mostrar dificultad cuando cambia el ejercicio
+  exerciseSelect.addEventListener('change', function(){
+    const selectedOption = this.options[this.selectedIndex];
+    const difficulty = selectedOption.dataset.difficulty;
+    
+    if (!difficulty) {
+      diffEl.innerHTML = '<small class="text-muted">Selecciona un ejercicio</small>';
+      return;
+    }
+    
+    let badgeClass = 'bg-success';
+    let badgeText = 'Principiante';
+    
+    if (difficulty === 'Intermedio') {
+      badgeClass = 'bg-warning text-dark';
+      badgeText = 'Intermedio';
+    } else if (difficulty === 'Avanzado') {
+      badgeClass = 'bg-danger';
+      badgeText = 'Avanzado';
+    }
+    
+    diffEl.innerHTML = `<span class="badge ${badgeClass} fs-6">${badgeText}</span>`;
+  });
+  
+  // Si hay un ejercicio pre-seleccionado, mostrar su dificultad
+  if (exerciseSelect.value) {
+    const selectedOption = exerciseSelect.options[exerciseSelect.selectedIndex];
+    const muscle = selectedOption.dataset.muscle;
+    muscleSelect.value = muscle;
+    exerciseSelect.dispatchEvent(new Event('change'));
+  }
+});
+</script>
+{% endblock %}

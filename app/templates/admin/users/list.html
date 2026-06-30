@@ -1,0 +1,65 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Usuarios – Admin FitPal{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="fw-bold mb-0">Usuarios</h2>
+  <a href="{{ url_for('admin.user_create') }}" class="btn btn-dark">
+    <i class="bi bi-plus-lg me-1"></i> Nuevo usuario
+  </a>
+</div>
+
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-dark">
+      <tr>
+        <th>#</th><th>Nombre</th><th>Email</th><th>Plan</th><th>Estado</th><th>Registro</th><th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>
+          {% if u.avatar_url %}<img src="{{ u.avatar_url }}" width="28" class="rounded-circle me-2">{% endif %}
+          {{ u.name }}
+          {% if u.google_id %}<i class="bi bi-google text-danger ms-1" title="Google"></i>{% endif %}
+        </td>
+        <td>{{ u.email }}</td>
+        <td>
+          {% if u.subscription and u.subscription.active %}
+            <span class="badge bg-success">{{ u.subscription.plan.name }}</span>
+          {% else %}
+            <span class="badge bg-secondary">Sin plan</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.active %}
+            <span class="badge bg-success">Activo</span>
+          {% else %}
+            <span class="badge bg-danger">Inactivo</span>
+          {% endif %}
+        </td>
+        <td>{{ u.created_at.strftime('%d/%m/%Y') }}</td>
+        <td>
+          <a href="{{ url_for('admin.user_edit', user_id=u.id) }}" class="btn btn-sm btn-outline-primary me-1">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <a href="{{ url_for('admin.user_routine', user_id=u.id) }}" class="btn btn-sm btn-outline-success me-1" title="Gestionar rutina">
+            <i class="bi bi-dumbbell"></i>
+          </a>
+          <form method="POST" action="{{ url_for('admin.user_delete', user_id=u.id) }}" class="d-inline"
+                onsubmit="return confirm('¿Eliminar a {{ u.name }}?')">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="7" class="text-center text-muted">Sin usuarios aún.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

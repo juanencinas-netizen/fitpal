@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Planes – FitPal{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h2 class="fw-bold text-center content-heading mb-2">Nuestros planes</h2>
+  <p class="text-center text-muted mb-5">Elegí el plan que mejor se adapte a vos.</p>
+
+  <div class="row g-4 justify-content-center">
+    {% for plan in planes %}
+    <div class="col-md-4">
+      <div class="plan-card h-100 shadow border-0 text-center position-relative">
+        {% if plan.name == '6 MESES' or plan.name == 'Plan Black' or plan.name == 'Black' %}
+          <div class="position-absolute top-0 start-0 m-3"><span class="badge bg-warning text-dark">Recomendado</span></div>
+        {% endif %}
+        <div class="plan-inner p-4 d-flex flex-column h-100 text-start">
+          <div class="plan-header mb-3">
+            <h4 class="fw-bold mb-0">{{ plan._display_name if plan._display_name else plan.name }}</h4>
+          </div>
+
+          <div class="plan-price my-4 text-center">
+            <div class="price-amount">${{ "%.0f"|format(plan._display_price if plan._display_price is not none else plan.price) }}</div>
+            <div class="price-period text-muted small">/mes</div>
+          </div>
+
+          <div class="plan-desc text-muted mb-4">{{ plan.description | safe }}</div>
+
+          <div class="mt-auto">
+            {% if current_user.is_authenticated %}
+              {% if current_user.subscription and current_user.subscription.active %}
+                {% if current_user.subscription.plan_id == plan.id %}
+                  <span class="btn btn-subscribe disabled w-100">Plan actual</span>
+                {% else %}
+                  <a href="{{ url_for('plans.subscribe', plan_id=plan.id) }}" class="btn btn-subscribe w-100 fw-bold">Cambiar a este plan</a>
+                {% endif %}
+              {% else %}
+                <a href="{{ url_for('plans.subscribe', plan_id=plan.id) }}" class="btn btn-subscribe w-100 fw-bold">Suscribirme</a>
+              {% endif %}
+            {% else %}
+              <a href="{{ url_for('auth.login') }}" class="btn btn-subscribe w-100 fw-bold">Iniciar sesión para suscribirme</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <p class="text-center text-muted">No hay planes disponibles por el momento.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
